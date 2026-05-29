@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+.env
+
+# VS Code
+.vscode/
+
+# Docker
+postgres_data/
+
+# mac/linux
+.DS_Store
+
+# pytest
+.pytest_cache/
+
+# mypy
+.mypy_cache/
