@@ -1,18 +1,11 @@
 import sys
-
 from PyQt6.QtWidgets import QApplication
-
-from windows.main_window import MainWindow
-
-
-def main():
-    app = QApplication(sys.argv)
-
-    window = MainWindow()
-    window.show()
-
-    app.exec()
+from windows.medicine_window import MedicineWindow
 
 
-if __name__ == "__main__":
-    main()
+app = QApplication(sys.argv)
+
+window = MedicineWindow()
+window.show()
+
+sys.exit(app.exec())
