@@ -1,3 +1,4 @@
+# pharmacy_app/backend/app/main.py
 from fastapi import FastAPI
 
 from app.database import engine

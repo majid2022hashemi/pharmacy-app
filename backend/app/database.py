@@ -1,9 +1,11 @@
+# pharmacy_app/backend/app/database.py
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 
 DATABASE_URL = (
-    "postgresql+psycopg://pharmacy:pharmacy@db:5432/pharmacy_db"
+    "postgresql+psycopg://majid:linux113@db:5432/pharmacy_db"
+
 )
 
 

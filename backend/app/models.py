@@ -1,5 +1,19 @@
-from sqlalchemy import Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from datetime import datetime
+from decimal import Decimal
+
+from sqlalchemy import (
+    Integer,
+    String,
+    Boolean,
+    Numeric,
+    DateTime,
+    func,
+)
+
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+)
 
 from app.database import Base
 
@@ -13,12 +27,44 @@ class Medicine(Base):
         primary_key=True,
     )
 
-    name: Mapped[str] = mapped_column(
-        String(255),
+    code: Mapped[str] = mapped_column(
+        String(20),
+        unique=True,
         nullable=False,
     )
 
-    quantity: Mapped[int] = mapped_column(
+    name: Mapped[str] = mapped_column(
+        String(200),
+        nullable=False,
+    )
+
+    generic_name: Mapped[str | None] = mapped_column(
+        String(200),
+    )
+
+    dosage_form: Mapped[str | None] = mapped_column(
+        String(50),
+    )
+
+    strength: Mapped[str | None] = mapped_column(
+        String(50),
+    )
+
+    is_prescription: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+    )
+
+    current_stock: Mapped[int] = mapped_column(
         Integer,
         default=0,
+    )
+
+    sale_price: Mapped[Decimal | None] = mapped_column(
+        Numeric(12, 2),
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.now(),
     )

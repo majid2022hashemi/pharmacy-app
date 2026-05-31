@@ -1,3 +1,4 @@
+# pharmacy_app/backend/app/api/medicine.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -21,8 +22,13 @@ def create_medicine(
 ):
 
     db_medicine = Medicine(
+        code=medicine.code,
         name=medicine.name,
-        quantity=medicine.quantity,
+        generic_name=medicine.generic_name,
+        dosage_form=medicine.dosage_form,
+        strength=medicine.strength,
+        sale_price=medicine.sale_price,
+        current_stock=medicine.current_stock,
     )
 
     db.add(db_medicine)
