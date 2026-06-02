@@ -1,6 +1,12 @@
 # pharmacy_app/backend/app/models/category.py
+from __future__ import annotations
+
 from sqlalchemy import Integer, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
 from app.database import Base
 
@@ -20,7 +26,6 @@ class Category(Base):
         nullable=False,
     )
 
-    medicines = relationship(
-        "Medicine",
+    medicines: Mapped[list["Medicine"]] = relationship(
         back_populates="category",
     )
