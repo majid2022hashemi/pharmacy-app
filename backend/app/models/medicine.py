@@ -1,5 +1,10 @@
+from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
+from app.models.category import Category
+
 
 from sqlalchemy import (
     Integer,
@@ -68,3 +73,14 @@ class Medicine(Base):
         DateTime,
         server_default=func.now(),
     )
+
+    
+    category_id: Mapped[int | None] = mapped_column(
+        ForeignKey("categories.id"),
+    )
+
+    category = relationship(
+        "Category",
+        back_populates="medicines",
+    )
+    
