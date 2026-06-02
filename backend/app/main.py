@@ -1,6 +1,8 @@
 # pharmacy_app/backend/app/main.py
 
 
+
+
 from fastapi import FastAPI
 
 from app.database import (
@@ -24,3 +26,6 @@ app.include_router(medicine_router)
 @app.get("/")
 def root():
     return {"message": "Pharmacy API"}
+
+from app.api.category import router as category_router
+app.include_router(category_router)
