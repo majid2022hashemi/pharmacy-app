@@ -1,3 +1,5 @@
+# backend/app/schemas/category.py
+
 from pydantic import BaseModel
 
 
@@ -9,6 +11,5 @@ class CategoryResponse(BaseModel):
     id: int
     name: str
 
-    model_config = {
-        "from_attributes": True
-    }
+    class Config:
+        from_attributes = True
