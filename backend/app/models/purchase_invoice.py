@@ -1,4 +1,3 @@
-# pharmacy_app/backend/app/models/purchase_invoice.py
 from __future__ import annotations
 
 from datetime import datetime
@@ -44,12 +43,11 @@ class PurchaseInvoice(Base):
         ForeignKey("companies.id"),
     )
 
-    company = relationship(
-        "Company",
+    company: Mapped["Company"] = relationship(
         back_populates="purchase_invoices",
     )
 
-    items = relationship(
-        "PurchaseItem",
-        back_populates="invoice",
+    items: Mapped[list["PurchaseItem"]] = relationship(
+        back_populates="purchase_invoice",
+        cascade="all, delete-orphan",
     )

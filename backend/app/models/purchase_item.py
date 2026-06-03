@@ -1,6 +1,3 @@
-# pharmacy_app/backend/app/models/purchase_item.py
-from __future__ import annotations
-
 from decimal import Decimal
 
 from sqlalchemy import (
@@ -27,7 +24,7 @@ class PurchaseItem(Base):
         primary_key=True,
     )
 
-    invoice_id: Mapped[int] = mapped_column(
+    purchase_invoice_id: Mapped[int] = mapped_column(
         ForeignKey("purchase_invoices.id"),
     )
 
@@ -40,16 +37,17 @@ class PurchaseItem(Base):
         nullable=False,
     )
 
-    buy_price: Mapped[Decimal] = mapped_column(
+    unit_price: Mapped[Decimal] = mapped_column(
         Numeric(12, 2),
         nullable=False,
     )
 
-    invoice = relationship(
+    purchase_invoice = relationship(
         "PurchaseInvoice",
         back_populates="items",
     )
 
     medicine = relationship(
         "Medicine",
+        back_populates="purchase_items",
     )

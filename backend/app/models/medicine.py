@@ -1,4 +1,3 @@
-# pharmacy_app/backend/app/models/medicine.py
 from __future__ import annotations
 
 from datetime import datetime
@@ -90,10 +89,6 @@ class Medicine(Base):
         back_populates="medicines",
     )
 
-    company_id: Mapped[int | None] = mapped_column(
-        ForeignKey("companies.id"),
-    )
-
-    company: Mapped["Company | None"] = relationship(
-        back_populates="medicines",
+    purchase_items: Mapped[list["PurchaseItem"]] = relationship(
+        back_populates="medicine",
     )
