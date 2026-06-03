@@ -1,3 +1,6 @@
+
+# pharmacy_app/backend/app/models/medicine.py
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -43,15 +46,15 @@ class Medicine(Base):
     )
 
     generic_name: Mapped[str | None] = mapped_column(
-        String(200),
+        String(200)
     )
 
     dosage_form: Mapped[str | None] = mapped_column(
-        String(50),
+        String(50)
     )
 
     strength: Mapped[str | None] = mapped_column(
-        String(50),
+        String(50)
     )
 
     is_prescription: Mapped[bool] = mapped_column(
@@ -65,7 +68,7 @@ class Medicine(Base):
     )
 
     sale_price: Mapped[Decimal | None] = mapped_column(
-        Numeric(12, 2),
+        Numeric(12, 2)
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -73,22 +76,30 @@ class Medicine(Base):
         server_default=func.now(),
     )
 
-    category_id: Mapped[int | None] = mapped_column(
+    category_id: Mapped[int] = mapped_column(
         ForeignKey("categories.id"),
+        nullable=False,
     )
 
-    category: Mapped["Category | None"] = relationship(
+    company_id: Mapped[int] = mapped_column(
+        ForeignKey("companies.id"),
+        nullable=False,
+    )
+
+    category: Mapped["Category"] = relationship(
         back_populates="medicines",
     )
 
-    company_id: Mapped[int | None] = mapped_column(
-        ForeignKey("companies.id"),
-    )
-
-    company: Mapped["Company | None"] = relationship(
+    company: Mapped["Company"] = relationship(
         back_populates="medicines",
     )
 
     purchase_items: Mapped[list["PurchaseItem"]] = relationship(
+        "PurchaseItem",
+        back_populates="medicine",
+    )
+
+    sale_items: Mapped[list["SaleItem"]] = relationship(
+        "SaleItem",
         back_populates="medicine",
     )
