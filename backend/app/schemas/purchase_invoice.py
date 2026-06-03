@@ -3,13 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from app.schemas.company import CompanyResponse
-
-
-class PurchaseInvoiceCreate(BaseModel):
-
-    invoice_number: str
-
-    company_id: int
+from app.schemas.purchase_item import PurchaseItemResponse
 
 
 class PurchaseInvoiceResponse(BaseModel):
@@ -23,6 +17,8 @@ class PurchaseInvoiceResponse(BaseModel):
     company_id: int
 
     company: CompanyResponse
+
+    items: list[PurchaseItemResponse]
 
     model_config = {
         "from_attributes": True

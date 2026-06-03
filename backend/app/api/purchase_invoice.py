@@ -1,3 +1,5 @@
+# pharmacy_app/backend/app/api/purchase_invoice.py
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -12,11 +14,15 @@ from app.database import get_db
 
 from app.models import (
     PurchaseInvoice,
+    PurchaseItem,
 )
 
 from app.schemas.purchase_invoice import (
-    PurchaseInvoiceCreate,
     PurchaseInvoiceResponse,
+)
+
+from app.schemas.purchase_invoice_create import (
+    PurchaseInvoiceCreate,
 )
 
 router = APIRouter()
@@ -38,6 +44,19 @@ def create_purchase_invoice(
 
     db.add(db_invoice)
 
+    db.flush()
+
+    for item in invoice.items:
+
+        db_item = PurchaseItem(
+            purchase_invoice_id=db_invoice.id,
+            medicine_id=item.medicine_id,
+            quantity=item.quantity,
+            unit_price=item.unit_price,
+        )
+
+        db.add(db_item)
+
     db.commit()
 
     db.refresh(db_invoice)
@@ -56,7 +75,8 @@ def get_purchase_invoices(
     invoices = (
         db.query(PurchaseInvoice)
         .options(
-            joinedload(PurchaseInvoice.company)
+            joinedload(PurchaseInvoice.company),
+            joinedload(PurchaseInvoice.items),
         )
         .all()
     )
