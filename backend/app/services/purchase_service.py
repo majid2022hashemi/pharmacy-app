@@ -1,10 +1,8 @@
-# pharmacy_app/backend/app/services/purchase_service.py
+# backend/app/services/purchase_service.py
 
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
-
-from app.models import Medicine
 
 from app.repositories.purchase_repository import (
     PurchaseRepository,
@@ -12,6 +10,10 @@ from app.repositories.purchase_repository import (
 
 from app.repositories.medicine_repository import (
     MedicineRepository,
+)
+
+from app.inventory.inventory_service import (
+    InventoryService,
 )
 
 from app.exceptions.purchase_exceptions import (
@@ -39,7 +41,7 @@ class PurchaseService:
                 )
             )
 
-            total = Decimal("0")
+            total_amount = Decimal("0")
 
             for item in items:
 
@@ -51,9 +53,15 @@ class PurchaseService:
                 )
 
                 if medicine is None:
-                    raise MedicineNotFoundError()
 
-                medicine.current_stock += item.quantity
+                    raise MedicineNotFoundError(
+                        f"Medicine {item.medicine_id} not found"
+                    )
+
+                InventoryService.increase_stock(
+                    medicine,
+                    item.quantity,
+                )
 
                 PurchaseRepository.create_item(
                     db=db,
@@ -63,14 +71,14 @@ class PurchaseService:
                     unit_price=item.unit_price,
                 )
 
-                total += (
+                total_amount += (
                     item.quantity *
                     item.unit_price
                 )
 
             PurchaseRepository.update_total_amount(
                 invoice,
-                total,
+                total_amount,
             )
 
             db.commit()
@@ -80,5 +88,7 @@ class PurchaseService:
             return invoice
 
         except Exception:
+
             db.rollback()
+
             raise
