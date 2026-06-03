@@ -28,3 +28,7 @@ class Company(Base):
     medicines: Mapped[list["Medicine"]] = relationship(
         back_populates="company",
     )
+
+    purchase_invoices: Mapped[list["PurchaseInvoice"]] = relationship(
+        back_populates="company",
+    )
