@@ -1,9 +1,8 @@
 # pharmacy_app/backend/app/schemas/medicine.py
 from decimal import Decimal
 from pydantic import BaseModel
-
 from app.schemas.category import CategoryResponse
-
+from app.schemas.company import CompanyResponse
 
 class MedicineCreate(BaseModel):
 
@@ -19,7 +18,7 @@ class MedicineCreate(BaseModel):
     current_stock: int = 0
 
     category_id: int | None = None
-
+    company_id: int | None = None
 
 class MedicineResponse(BaseModel):
 
@@ -36,8 +35,10 @@ class MedicineResponse(BaseModel):
     current_stock: int
 
     category_id: int | None
-
+    company_id: int | None
+    
     category: CategoryResponse | None
+    company: CompanyResponse | None
 
     model_config = {
         "from_attributes": True

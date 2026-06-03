@@ -18,13 +18,15 @@ from app.api.category import (
     router as category_router,
 )
 
+from app.api.company import router as company_router
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
 app.include_router(medicine_router)
 app.include_router(category_router)
-
+app.include_router(company_router)
 
 @app.get("/")
 def root():

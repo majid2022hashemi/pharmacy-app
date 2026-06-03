@@ -81,3 +81,19 @@ class Medicine(Base):
     category: Mapped["Category | None"] = relationship(
         back_populates="medicines",
     )
+
+    company_id: Mapped[int | None] = mapped_column(
+        ForeignKey("companies.id"),
+    )
+
+    company: Mapped["Company | None"] = relationship(
+        back_populates="medicines",
+    )
+
+    company_id: Mapped[int | None] = mapped_column(
+        ForeignKey("companies.id"),
+    )
+
+    company: Mapped["Company | None"] = relationship(
+        back_populates="medicines",
+    )
