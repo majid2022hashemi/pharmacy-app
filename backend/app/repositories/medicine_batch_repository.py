@@ -1,22 +1,27 @@
 # backend/app/repositories/medicine_batch_repository.py
 
 from sqlalchemy import select
+from sqlalchemy.orm import Session
+from sqlalchemy import asc
 
 from app.models import MedicineBatch
 
 
 class MedicineBatchRepository:
 
+    # ----------------------------
+    # Create Batch
+    # ----------------------------
     @staticmethod
     def create(
-        db,
-        medicine_id,
-        batch_number,
+        db: Session,
+        medicine_id: int,
+        batch_number: str,
         expiry_date,
         purchase_price,
         sale_price,
-        quantity,
-    ):
+        quantity: int,
+    ) -> MedicineBatch:
 
         batch = MedicineBatch(
             medicine_id=medicine_id,
@@ -29,15 +34,46 @@ class MedicineBatchRepository:
         )
 
         db.add(batch)
-
         return batch
 
+    # ----------------------------
+    # FIFO SAFE: lock rows
+    # ----------------------------
+    @staticmethod
+    def get_available_batches_for_update(
+        db: Session,
+        medicine_id: int,
+    ):
+        """
+        FIFO + row-level lock (FOR UPDATE SKIP LOCKED)
+        prevents race conditions in concurrent sales.
+        """
+
+        return (
+            db.execute(
+                select(MedicineBatch)
+                .where(
+                    MedicineBatch.medicine_id == medicine_id,
+                    MedicineBatch.quantity_remaining > 0,
+                )
+                .order_by(
+                    asc(MedicineBatch.expiry_date),
+                    asc(MedicineBatch.id),
+                )
+                .with_for_update(skip_locked=True)
+            )
+            .scalars()
+            .all()
+        )
+
+    # ----------------------------
+    # Normal FIFO read (no lock)
+    # ----------------------------
     @staticmethod
     def get_available_batches(
-        db,
-        medicine_id,
+        db: Session,
+        medicine_id: int,
     ):
-
         return (
             db.query(MedicineBatch)
             .filter(
@@ -50,13 +86,15 @@ class MedicineBatchRepository:
             )
             .all()
         )
-    
+
+    # ----------------------------
+    # First batch (FIFO)
+    # ----------------------------
     @staticmethod
     def get_first_available_batch(
-        db,
-        medicine_id,
+        db: Session,
+        medicine_id: int,
     ):
-
         return (
             db.query(MedicineBatch)
             .filter(
@@ -69,3 +107,32 @@ class MedicineBatchRepository:
             )
             .first()
         )
+
+    # ----------------------------
+    # Reserve stock (IMPORTANT)
+    # ----------------------------
+    @staticmethod
+    def reserve_stock(
+        batch: MedicineBatch,
+        quantity: int,
+    ):
+        """
+        Reserve stock inside a batch (decrease available)
+        """
+        if batch.quantity_remaining < quantity:
+            raise ValueError("Not enough batch stock")
+
+        batch.quantity_remaining -= quantity
+
+    # ----------------------------
+    # Release stock (rollback-safe helper)
+    # ----------------------------
+    @staticmethod
+    def release_stock(
+        batch: MedicineBatch,
+        quantity: int,
+    ):
+        """
+        Return stock back (used in rollback scenarios)
+        """
+        batch.quantity_remaining += quantity
