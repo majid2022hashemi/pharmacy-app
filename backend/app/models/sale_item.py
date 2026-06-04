@@ -1,4 +1,5 @@
 # pharmacy_app/backend/app/models/sale_item.py
+
 from __future__ import annotations
 
 from decimal import Decimal
@@ -28,19 +29,28 @@ class SaleItem(Base):
     )
 
     sale_id: Mapped[int] = mapped_column(
-        ForeignKey("sales.id")
+        ForeignKey("sales.id"),
+        nullable=False,
     )
 
     medicine_id: Mapped[int] = mapped_column(
-        ForeignKey("medicines.id")
+        ForeignKey("medicines.id"),
+        nullable=False,
+    )
+
+    batch_id: Mapped[int | None] = mapped_column(
+        ForeignKey("medicine_batches.id"),
+        nullable=True,
     )
 
     quantity: Mapped[int] = mapped_column(
-        Integer
+        Integer,
+        nullable=False,
     )
 
     unit_price: Mapped[Decimal] = mapped_column(
-        Numeric(12, 2)
+        Numeric(12, 2),
+        nullable=False,
     )
 
     sale = relationship(
@@ -51,4 +61,8 @@ class SaleItem(Base):
     medicine = relationship(
         "Medicine",
         back_populates="sale_items",
+    )
+
+    batch = relationship(
+        "MedicineBatch",
     )

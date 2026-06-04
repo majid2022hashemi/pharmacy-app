@@ -1,11 +1,15 @@
+# backend/app/models/purchase_invoice.py
+
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 
 from sqlalchemy import (
     Integer,
     String,
     DateTime,
+    Numeric,
     ForeignKey,
     func,
 )
@@ -41,13 +45,21 @@ class PurchaseInvoice(Base):
 
     company_id: Mapped[int] = mapped_column(
         ForeignKey("companies.id"),
+        nullable=False,
+    )
+
+    total_amount: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2),
+        default=0,
     )
 
     company: Mapped["Company"] = relationship(
+        "Company",
         back_populates="purchase_invoices",
     )
 
     items: Mapped[list["PurchaseItem"]] = relationship(
+        "PurchaseItem",
         back_populates="purchase_invoice",
         cascade="all, delete-orphan",
     )

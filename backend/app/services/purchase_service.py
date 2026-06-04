@@ -12,6 +12,10 @@ from app.repositories.medicine_repository import (
     MedicineRepository,
 )
 
+from app.repositories.medicine_batch_repository import (
+    MedicineBatchRepository,
+)
+
 from app.inventory.inventory_service import (
     InventoryService,
 )
@@ -63,6 +67,16 @@ class PurchaseService:
                     item.quantity,
                 )
 
+                MedicineBatchRepository.create(
+                    db=db,
+                    medicine_id=item.medicine_id,
+                    batch_number=item.batch_number,
+                    expiry_date=item.expiry_date,
+                    purchase_price=item.unit_price,
+                    sale_price=medicine.sale_price,
+                    quantity=item.quantity,
+                )
+
                 PurchaseRepository.create_item(
                     db=db,
                     invoice_id=invoice.id,
@@ -72,8 +86,8 @@ class PurchaseService:
                 )
 
                 total_amount += (
-                    item.quantity *
-                    item.unit_price
+                    item.quantity
+                    * item.unit_price
                 )
 
             PurchaseRepository.update_total_amount(

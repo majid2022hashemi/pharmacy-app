@@ -1,4 +1,7 @@
+# backend/app/schemas/purchase_invoice.py
+
 from datetime import datetime
+from decimal import Decimal
 
 from pydantic import BaseModel
 
@@ -16,10 +19,11 @@ class PurchaseInvoiceResponse(BaseModel):
 
     company_id: int
 
+    total_amount: Decimal
+
     company: CompanyResponse
 
     items: list[PurchaseItemResponse]
 
-    model_config = {
-        "from_attributes": True
-    }
+    class Config:
+        from_attributes = True

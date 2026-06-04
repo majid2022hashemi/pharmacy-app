@@ -1,4 +1,3 @@
-
 # pharmacy_app/backend/app/models/medicine.py
 
 from __future__ import annotations
@@ -102,4 +101,10 @@ class Medicine(Base):
     sale_items: Mapped[list["SaleItem"]] = relationship(
         "SaleItem",
         back_populates="medicine",
+    )
+
+    batches: Mapped[list["MedicineBatch"]] = relationship(
+        "MedicineBatch",
+        back_populates="medicine",
+        cascade="all, delete-orphan",
     )

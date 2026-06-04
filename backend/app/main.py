@@ -1,6 +1,6 @@
 # backend/app/main.py
 from fastapi import FastAPI
-
+from app.models.medicine_batch import MedicineBatch
 from app.database import Base, engine
 from app.models import (
     Medicine,
