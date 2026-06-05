@@ -1,4 +1,4 @@
-from __future__ import annotations
+# backend/app/models/stock_movement.py
 
 from datetime import datetime
 from decimal import Decimal
@@ -7,8 +7,8 @@ from sqlalchemy import (
     Integer,
     String,
     DateTime,
-    ForeignKey,
     Numeric,
+    ForeignKey,
 )
 
 from sqlalchemy.orm import (

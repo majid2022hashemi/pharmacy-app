@@ -16,8 +16,16 @@ from app.repositories.medicine_batch_repository import (
     MedicineBatchRepository,
 )
 
+from app.repositories.stock_movement_repository import (
+    StockMovementRepository,
+)
+
 from app.inventory.inventory_service import (
     InventoryService,
+)
+
+from app.enums.stock_movement_type import (
+    StockMovementType,
 )
 
 from app.exceptions.purchase_exceptions import (
@@ -67,14 +75,16 @@ class PurchaseService:
                     item.quantity,
                 )
 
-                MedicineBatchRepository.create(
-                    db=db,
-                    medicine_id=item.medicine_id,
-                    batch_number=item.batch_number,
-                    expiry_date=item.expiry_date,
-                    purchase_price=item.unit_price,
-                    sale_price=medicine.sale_price,
-                    quantity=item.quantity,
+                batch = (
+                    MedicineBatchRepository.create(
+                        db=db,
+                        medicine_id=item.medicine_id,
+                        batch_number=item.batch_number,
+                        expiry_date=item.expiry_date,
+                        purchase_price=item.unit_price,
+                        sale_price=medicine.sale_price,
+                        quantity=item.quantity,
+                    )
                 )
 
                 PurchaseRepository.create_item(
@@ -83,6 +93,17 @@ class PurchaseService:
                     medicine_id=item.medicine_id,
                     quantity=item.quantity,
                     unit_price=item.unit_price,
+                )
+
+                StockMovementRepository.create(
+                    db=db,
+                    medicine_id=item.medicine_id,
+                    batch_id=batch.id,
+                    movement_type=StockMovementType.PURCHASE,
+                    quantity=item.quantity,
+                    unit_price=item.unit_price,
+                    reference_id=invoice.id,
+                    notes=f"Purchase {invoice.invoice_number}",
                 )
 
                 total_amount += (

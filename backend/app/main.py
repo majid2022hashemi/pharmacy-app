@@ -1,7 +1,7 @@
-# backend/app/main.py
 from fastapi import FastAPI
-from app.models.medicine_batch import MedicineBatch
+
 from app.database import Base, engine
+
 from app.models import (
     Medicine,
     Category,
@@ -10,7 +10,11 @@ from app.models import (
     PurchaseItem,
     Sale,
     SaleItem,
+    MedicineBatch,
+    StockMovement,
+    StockReservation,
 )
+
 from app.api.medicine import router as medicine_router
 from app.api.category import router as category_router
 from app.api.company import router as company_router
@@ -18,16 +22,13 @@ from app.api.purchase_invoice import router as purchase_invoice_router
 from app.api.purchase_item import router as purchase_item_router
 from app.api.sale import router as sale_router
 
-# Create database tables
 Base.metadata.create_all(bind=engine)
 
-# Initialize FastAPI app
 app = FastAPI(
     title="Pharmacy API",
     version="1.0.0",
 )
 
-# Include routers
 app.include_router(medicine_router)
 app.include_router(category_router)
 app.include_router(company_router)
@@ -38,4 +39,6 @@ app.include_router(sale_router)
 
 @app.get("/")
 def root():
-    return {"message": "Pharmacy API"}
+    return {
+        "message": "Pharmacy API"
+    }

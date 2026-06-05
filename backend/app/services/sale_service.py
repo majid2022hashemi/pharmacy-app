@@ -1,18 +1,41 @@
+# backend/app/services/sale_service.py
+
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from app.repositories.sale_repository import SaleRepository
-from app.repositories.medicine_repository import MedicineRepository
-from app.repositories.medicine_batch_repository import MedicineBatchRepository
-from app.repositories.reservation_repository import ReservationRepository
+from app.repositories.sale_repository import (
+    SaleRepository,
+)
+
+from app.repositories.medicine_repository import (
+    MedicineRepository,
+)
+
+from app.repositories.medicine_batch_repository import (
+    MedicineBatchRepository,
+)
+
+from app.repositories.reservation_repository import (
+    ReservationRepository,
+)
+
+from app.repositories.stock_movement_repository import (
+    StockMovementRepository,
+)
+
+from app.enums.stock_movement_type import (
+    StockMovementType,
+)
 
 from app.exceptions.sale_exceptions import (
     MedicineNotFoundError,
     InsufficientStockError,
 )
 
-from app.schemas.sale import SaleItemCreate
+from app.schemas.sale import (
+    SaleItemCreate,
+)
 
 
 class SaleService:
@@ -35,79 +58,125 @@ class SaleService:
 
             total_amount = Decimal("0")
 
-            reservations = []
-
             for item in items:
 
-                medicine = MedicineRepository.get_by_id(db, item.medicine_id)
-
-                if not medicine:
-                    raise MedicineNotFoundError(
-                        f"Medicine {item.medicine_id} not found"
-                    )
-
-                remaining = item.quantity
-
-                batches = MedicineBatchRepository.get_available_batches_for_update(
+                medicine = MedicineRepository.get_by_id(
                     db,
                     item.medicine_id,
                 )
 
-                total_available = sum(b.quantity_remaining for b in batches)
+                if medicine is None:
+
+                    raise MedicineNotFoundError(
+                        f"Medicine {item.medicine_id} not found"
+                    )
+
+                remaining_quantity = item.quantity
+
+                batches = (
+                    MedicineBatchRepository
+                    .get_available_batches_for_update(
+                        db,
+                        item.medicine_id,
+                    )
+                )
+
+                total_available = sum(
+                    batch.quantity_remaining
+                    for batch in batches
+                )
 
                 if total_available < item.quantity:
+
                     raise InsufficientStockError(
                         f"Not enough stock for {medicine.name}"
                     )
 
                 for batch in batches:
 
-                    if remaining <= 0:
+                    if remaining_quantity <= 0:
                         break
 
-                    qty = min(remaining, batch.quantity_remaining)
-
-                    # 🔥 reserve stock (not direct deduction)
-                    batch.quantity_remaining -= qty
-
-                    reservation = ReservationRepository.create(
-                        db=db,
-                        medicine_id=item.medicine_id,
-                        batch_id=batch.id,
-                        quantity=qty,
+                    sell_quantity = min(
+                        remaining_quantity,
+                        batch.quantity_remaining,
                     )
 
-                    reservations.append(reservation)
+                    reservation = (
+                        ReservationRepository.create(
+                            db=db,
+                            medicine_id=item.medicine_id,
+                            batch_id=batch.id,
+                            quantity=sell_quantity,
+                        )
+                    )
+
+                    batch.quantity_remaining -= sell_quantity
 
                     SaleRepository.create_item(
                         db=db,
                         sale_id=sale.id,
                         medicine_id=item.medicine_id,
                         batch_id=batch.id,
-                        quantity=qty,
+                        quantity=sell_quantity,
                         unit_price=item.unit_price,
                     )
 
-                    remaining -= qty
+                    StockMovementRepository.create(
+                        db=db,
+                        medicine_id=item.medicine_id,
+                        batch_id=batch.id,
+                        movement_type=StockMovementType.SALE,
+                        quantity=sell_quantity,
+                        unit_price=item.unit_price,
+                        reference_id=sale.id,
+                        notes=f"Sale {sale.sale_number}",
+                    )
+
+                    reservation.status = "committed"
+
+                    remaining_quantity -= sell_quantity
 
                 medicine.current_stock -= item.quantity
 
-                total_amount += item.quantity * item.unit_price
+                total_amount += (
+                    item.quantity
+                    * item.unit_price
+                )
 
             sale.total_amount = total_amount
 
-            # commit reservations
-            for r in reservations:
-                ReservationRepository.commit(r)
-
             db.commit()
+
             db.refresh(sale)
 
-            return SaleRepository.get_by_id(db, sale.id)
+            return SaleRepository.get_by_id(
+                db,
+                sale.id,
+            )
 
         except Exception:
 
-            # rollback-safe release
             db.rollback()
 
             raise
+
+    @staticmethod
+    def get_sale(
+        db: Session,
+        sale_id: int,
+    ):
+
+        return SaleRepository.get_by_id(
+            db,
+            sale_id,
+        )
+
+    @staticmethod
+    def get_sales(
+        db: Session,
+    ):
+
+        return SaleRepository.get_all(
+            db,
+        )

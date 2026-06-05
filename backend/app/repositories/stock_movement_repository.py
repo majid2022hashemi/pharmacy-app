@@ -1,5 +1,4 @@
-from decimal import Decimal
-from sqlalchemy.orm import Session
+# backend/app/repositories/stock_movement_repository.py
 
 from app.models import StockMovement
 
@@ -8,15 +7,15 @@ class StockMovementRepository:
 
     @staticmethod
     def create(
-        db: Session,
-        medicine_id: int,
-        batch_id: int | None,
-        movement_type: str,
-        quantity: int,
-        unit_price: Decimal | None = None,
-        reference_id: int | None = None,
-        notes: str | None = None,
-    ) -> StockMovement:
+        db,
+        medicine_id,
+        batch_id,
+        movement_type,
+        quantity,
+        unit_price=None,
+        reference_id=None,
+        notes=None,
+    ):
 
         movement = StockMovement(
             medicine_id=medicine_id,
