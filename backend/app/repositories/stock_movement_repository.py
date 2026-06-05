@@ -1,7 +1,4 @@
-# backend/app/repositories/stock_movement_repository.py
-
 from app.models import StockMovement
-
 
 class StockMovementRepository:
 
@@ -16,7 +13,6 @@ class StockMovementRepository:
         reference_id=None,
         notes=None,
     ):
-
         movement = StockMovement(
             medicine_id=medicine_id,
             batch_id=batch_id,
@@ -28,5 +24,26 @@ class StockMovementRepository:
         )
 
         db.add(movement)
+        db.flush()
+
+        print(
+            "MOVEMENT CREATED:",
+            movement.id,
+            movement_type,
+            batch_id,
+            quantity,
+        )
 
         return movement
+    
+    
+    @staticmethod
+    def get_all(db):
+
+        return (
+            db.query(StockMovement)
+            .order_by(
+                StockMovement.created_at.desc()
+            )
+            .all()
+        )

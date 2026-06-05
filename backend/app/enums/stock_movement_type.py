@@ -3,10 +3,17 @@ from enum import Enum
 
 class StockMovementType(str, Enum):
     PURCHASE = "PURCHASE"
+
     SALE = "SALE"
+
     SALE_RETURN = "SALE_RETURN"
+
     PURCHASE_RETURN = "PURCHASE_RETURN"
+
     ADJUSTMENT_PLUS = "ADJUSTMENT_PLUS"
+
     ADJUSTMENT_MINUS = "ADJUSTMENT_MINUS"
+
     EXPIRED = "EXPIRED"
+
     DAMAGED = "DAMAGED"
