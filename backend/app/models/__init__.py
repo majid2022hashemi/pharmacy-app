@@ -8,6 +8,7 @@ from .sale import Sale
 from .sale_item import SaleItem
 from .stock_movement import StockMovement
 from .stock_reservation import StockReservation
+from .sale_return import SaleReturn
 
 
 __all__ = [
@@ -21,4 +22,5 @@ __all__ = [
     "SaleItem",
     "StockMovement",
     "StockReservation",
+    "SaleReturn",
 ]

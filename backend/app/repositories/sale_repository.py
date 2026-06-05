@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 from sqlalchemy.orm import joinedload
+from app.models import SaleItem
 
 from app.models import (
     Sale,
@@ -103,4 +104,18 @@ class SaleRepository:
                 Sale.id.desc()
             )
             .all()
+        )
+    
+    @staticmethod
+    def get_sale_item(
+        db,
+        sale_item_id,
+    ):
+
+        return (
+            db.query(SaleItem)
+            .filter(
+                SaleItem.id == sale_item_id
+            )
+            .first()
         )
