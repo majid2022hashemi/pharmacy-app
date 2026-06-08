@@ -1,6 +1,5 @@
 import requests
-
-BASE_URL = "http://127.0.0.1:8001"
+from config import BASE_URL
 
 
 def get_medicines():
@@ -9,12 +8,16 @@ def get_medicines():
     return response.json()
 
 
-def create_medicine(name, quantity):
+def create_medicine(code, name, current_stock=0, sale_price=None, category_id=None, company_id=None):
     response = requests.post(
         f"{BASE_URL}/medicines",
         json={
+            "code": code,
             "name": name,
-            "quantity": quantity,
+            "current_stock": current_stock,
+            "sale_price": sale_price,
+            "category_id": category_id,
+            "company_id": company_id,
         },
     )
 

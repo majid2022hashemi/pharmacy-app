@@ -36,6 +36,7 @@ class PurchaseRepository:
         db: Session,
         invoice_id: int,
         medicine_id: int,
+        batch_id: int,
         quantity: int,
         unit_price: Decimal,
     ) -> PurchaseItem:
@@ -43,6 +44,7 @@ class PurchaseRepository:
         item = PurchaseItem(
             purchase_invoice_id=invoice_id,
             medicine_id=medicine_id,
+            batch_id=batch_id,
             quantity=quantity,
             unit_price=unit_price,
         )
@@ -56,5 +58,18 @@ class PurchaseRepository:
         invoice: PurchaseInvoice,
         total_amount: Decimal,
     ):
-
         invoice.total_amount = total_amount
+
+    # -----------------------
+    # متد اضافه شده برای گرفتن آیتم خرید
+    # -----------------------
+    @staticmethod
+    def get_purchase_item(
+        db: Session,
+        purchase_item_id: int,
+    ) -> PurchaseItem | None:
+        return (
+            db.query(PurchaseItem)
+            .filter(PurchaseItem.id == purchase_item_id)
+            .first()
+        )

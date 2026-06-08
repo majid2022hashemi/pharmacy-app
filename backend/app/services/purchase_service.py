@@ -91,6 +91,7 @@ class PurchaseService:
                     db=db,
                     invoice_id=invoice.id,
                     medicine_id=item.medicine_id,
+                    batch_id=batch.id,
                     quantity=item.quantity,
                     unit_price=item.unit_price,
                 )

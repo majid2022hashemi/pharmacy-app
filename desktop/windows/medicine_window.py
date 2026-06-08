@@ -8,9 +8,7 @@ from PyQt6.QtWidgets import (
 )
 
 import requests
-
-
-BASE_URL = "http://127.0.0.1:8001"
+from config import BASE_URL
 
 
 class MedicineWindow(QMainWindow):
@@ -47,7 +45,7 @@ class MedicineWindow(QMainWindow):
             for row, item in enumerate(data):
                 self.table.setItem(row, 0, QTableWidgetItem(str(item["id"])))
                 self.table.setItem(row, 1, QTableWidgetItem(item["name"]))
-                self.table.setItem(row, 2, QTableWidgetItem(str(item["quantity"])))
+                self.table.setItem(row, 2, QTableWidgetItem(str(item["current_stock"])))
 
         except Exception as e:
             print("Error loading data:", e)
