@@ -1,4 +1,3 @@
-# backend/app/models/medicine_batch.py
 from __future__ import annotations
 
 from datetime import date
@@ -68,4 +67,9 @@ class MedicineBatch(Base):
     medicine: Mapped["Medicine"] = relationship(
         "Medicine",
         back_populates="batches",
+    )
+
+    purchase_items: Mapped[list["PurchaseItem"]] = relationship(
+        "PurchaseItem",
+        back_populates="batch",
     )

@@ -9,7 +9,7 @@ from .sale_item import SaleItem
 from .stock_movement import StockMovement
 from .stock_reservation import StockReservation
 from .sale_return import SaleReturn
-
+from .purchase_return import PurchaseReturn
 
 __all__ = [
     "Category",
@@ -23,4 +23,5 @@ __all__ = [
     "StockMovement",
     "StockReservation",
     "SaleReturn",
+    "PurchaseReturn",
 ]

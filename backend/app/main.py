@@ -23,6 +23,9 @@ from app.api.purchase_item import router as purchase_item_router
 from app.api.sale import router as sale_router
 from app.api.stock_movement import (router as stock_movement_router)
 from app.api.sale_return import (router as sale_return_router,)
+from app.api.purchase_return import router as purchase_return_router
+
+
 
 Base.metadata.create_all(bind=engine)
 
@@ -39,6 +42,7 @@ app.include_router(purchase_item_router)
 app.include_router(sale_router)
 app.include_router(stock_movement_router)
 app.include_router(sale_return_router)
+app.include_router(purchase_return_router)
 
 @app.get("/")
 def root():

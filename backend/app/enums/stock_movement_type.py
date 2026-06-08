@@ -17,3 +17,5 @@ class StockMovementType(str, Enum):
     EXPIRED = "EXPIRED"
 
     DAMAGED = "DAMAGED"
+
+    

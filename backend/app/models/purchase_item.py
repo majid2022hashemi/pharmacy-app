@@ -26,10 +26,18 @@ class PurchaseItem(Base):
 
     purchase_invoice_id: Mapped[int] = mapped_column(
         ForeignKey("purchase_invoices.id"),
+        nullable=False,
     )
 
     medicine_id: Mapped[int] = mapped_column(
         ForeignKey("medicines.id"),
+        nullable=False,
+    )
+
+    # اضافه شود
+    batch_id: Mapped[int] = mapped_column(
+        ForeignKey("medicine_batches.id"),
+        nullable=False,
     )
 
     quantity: Mapped[int] = mapped_column(
@@ -49,5 +57,10 @@ class PurchaseItem(Base):
 
     medicine = relationship(
         "Medicine",
+        back_populates="purchase_items",
+    )
+
+    batch = relationship(
+        "MedicineBatch",
         back_populates="purchase_items",
     )
