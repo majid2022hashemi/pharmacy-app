@@ -211,7 +211,11 @@ class MainWindow(QMainWindow):
             if perm and perm not in perms:
                 continue
 
-            if label == "مدیریت کاربران":
+            if label == "داشبورد":
+                from windows.dashboard_page import DashboardPage
+                self._dashboard_page = DashboardPage()
+                self._stack.addWidget(self._dashboard_page)
+            elif label == "مدیریت کاربران":
                 self._users_page = UsersPage()
                 self._stack.addWidget(self._users_page)
             else:

@@ -2,12 +2,13 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
     QDialog, QLineEdit, QComboBox, QMessageBox, QFormLayout,
+    QCheckBox, QScrollArea,
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 
 import requests
-from api.users_api import get_users, create_user, update_user, deactivate_user, activate_user, admin_reset_password
+from api.users_api import get_users, create_user, update_user, update_permissions, deactivate_user, activate_user, admin_reset_password
 from windows.login_window import _make_password_row
 
 ROLE_FA = {
@@ -391,6 +392,126 @@ class EditUserDialog(QDialog):
             self._error.setText("خطای غیرمنتظره رخ داد")
 
 
+PERM_FA = {
+    "create_purchase":   "ورود کالا (خرید)",
+    "create_sale":       "فروش",
+    "change_price":      "تغییر قیمت",
+    "manage_inventory":  "مدیریت انبار",
+    "manage_users":      "مدیریت کاربران",
+    "view_reports":      "مشاهده گزارش‌ها",
+    "manage_returns":    "مدیریت مرجوعی",
+}
+
+# مجوزهای پیش‌فرض هر نقش (کپی از backend/core/security.py)
+ROLE_DEFAULT_PERMS: dict[str, list[str]] = {
+    "ADMIN":               list(PERM_FA.keys()),
+    "PHARMACIST":          ["create_purchase", "create_sale", "change_price", "manage_inventory", "view_reports", "manage_returns"],
+    "OTC":                 ["create_sale", "view_reports"],
+    "PRESCRIPTION":        ["create_sale", "view_reports"],
+    "COSMETICS":           ["create_sale", "view_reports"],
+    "CASHIER":             ["create_sale", "view_reports"],
+    "WAREHOUSE":           ["create_purchase", "manage_inventory", "view_reports", "manage_returns"],
+    "MEDICAL_EQUIPMENT":   ["create_sale", "view_reports"],
+    "PHARMACY_TECHNICIAN": ["create_sale", "view_reports"],
+    "TRAINEE":             [],
+}
+
+
+# ── Permissions Dialog ─────────────────────────────────────
+class PermissionsDialog(QDialog):
+    def __init__(self, user: dict, parent=None):
+        super().__init__(parent)
+        self._user = user
+        self.setWindowTitle(f"مجوزها — {user.get('full_name', '')}")
+        self.setFixedWidth(360)
+        self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
+        self.setStyleSheet(DIALOG_STYLE)
+        self._build_ui()
+
+    def _build_ui(self):
+        v = QVBoxLayout(self)
+        v.setContentsMargins(24, 20, 24, 20)
+        v.setSpacing(12)
+
+        title = QLabel("مدیریت مجوزهای کاربر")
+        title.setStyleSheet("font-size: 15px; font-weight: bold; color: #1e293b;")
+        v.addWidget(title)
+
+        uname = QLabel(f"نام کاربری: {self._user.get('username', '')}  ·  نقش: {ROLE_FA.get(self._user.get('role',''), '')}")
+        uname.setStyleSheet("font-size: 11px; color: #6b7280;")
+        v.addWidget(uname)
+
+        note = QLabel("✅ خاکستری = مجوز پیش‌فرض نقش  |  آبی = مجوز اضافی")
+        note.setStyleSheet("font-size: 10px; color: #94a3b8;")
+        note.setWordWrap(True)
+        v.addWidget(note)
+
+        role = self._user.get("role", "")
+        role_defaults = set(ROLE_DEFAULT_PERMS.get(role, []))
+        extra = set(self._user.get("extra_permissions", []))
+
+        self._checks: dict[str, QCheckBox] = {}
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        inner = QWidget()
+        inner_v = QVBoxLayout(inner)
+        inner_v.setSpacing(8)
+        inner_v.setContentsMargins(0, 4, 0, 4)
+
+        for perm_key, perm_fa in PERM_FA.items():
+            cb = QCheckBox(perm_fa)
+            cb.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
+
+            if perm_key in role_defaults:
+                cb.setChecked(True)
+                cb.setEnabled(False)
+                cb.setStyleSheet("QCheckBox { color: #9ca3af; font-size: 13px; }")
+            else:
+                cb.setChecked(perm_key in extra)
+                cb.setStyleSheet("QCheckBox { color: #1e293b; font-size: 13px; } QCheckBox::indicator:checked { background: #2563eb; border: 2px solid #2563eb; border-radius: 3px; }")
+
+            self._checks[perm_key] = cb
+            inner_v.addWidget(cb)
+
+        inner_v.addStretch()
+        scroll.setWidget(inner)
+        v.addWidget(scroll)
+
+        self._error = QLabel("")
+        self._error.setObjectName("error")
+        v.addWidget(self._error)
+
+        btns = QHBoxLayout()
+        save = QPushButton("ذخیره مجوزها")
+        save.setObjectName("save-btn")
+        save.clicked.connect(self._save)
+        cancel = QPushButton("انصراف")
+        cancel.setObjectName("cancel-btn")
+        cancel.clicked.connect(self.reject)
+        btns.addStretch()
+        btns.addWidget(cancel)
+        btns.addWidget(save)
+        v.addLayout(btns)
+
+    def _save(self):
+        role = self._user.get("role", "")
+        role_defaults = set(ROLE_DEFAULT_PERMS.get(role, []))
+
+        extra = [
+            perm_key
+            for perm_key, cb in self._checks.items()
+            if cb.isEnabled() and cb.isChecked() and perm_key not in role_defaults
+        ]
+
+        try:
+            update_permissions(self._user["id"], extra)
+            self.accept()
+        except Exception:
+            self._error.setText("خطا در ارتباط با سرور")
+
+
 # ── Admin Reset Password Dialog ────────────────────────────
 class AdminResetDialog(QDialog):
     def __init__(self, user_id: int, full_name: str, parent=None):
@@ -496,9 +617,9 @@ class UsersPage(QWidget):
 
         # Table
         self._table = QTableWidget()
-        self._table.setColumnCount(8)
+        self._table.setColumnCount(9)
         self._table.setHorizontalHeaderLabels(
-            ["نام کامل", "نام کاربری", "نقش", "بخش", "وضعیت", "ویرایش", "تغییر رمز", "فعال/غیرفعال"]
+            ["نام کامل", "نام کاربری", "نقش", "بخش", "وضعیت", "ویرایش", "مجوزها", "تغییر رمز", "فعال/غیرفعال"]
         )
         self._table.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self._table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -514,12 +635,14 @@ class UsersPage(QWidget):
         hdr.setSectionResizeMode(5, QHeaderView.ResizeMode.Fixed)
         hdr.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
         hdr.setSectionResizeMode(7, QHeaderView.ResizeMode.Fixed)
+        hdr.setSectionResizeMode(8, QHeaderView.ResizeMode.Fixed)
         self._table.setColumnWidth(2, 140)
         self._table.setColumnWidth(3, 160)
         self._table.setColumnWidth(4, 100)
         self._table.setColumnWidth(5, 110)
         self._table.setColumnWidth(6, 110)
-        self._table.setColumnWidth(7, 130)
+        self._table.setColumnWidth(7, 110)
+        self._table.setColumnWidth(8, 130)
         self._table.setRowHeight(0, 44)
         v.addWidget(self._table)
 
@@ -560,11 +683,17 @@ class UsersPage(QWidget):
             edit_btn.clicked.connect(lambda _, u=user: self._edit_user(u))
             self._table.setCellWidget(row, 5, self._wrap_btn(edit_btn))
 
+            # Permissions button
+            perm_btn = QPushButton("🔐 مجوزها")
+            perm_btn.setObjectName("action-btn")
+            perm_btn.clicked.connect(lambda _, u=user: self._edit_permissions(u))
+            self._table.setCellWidget(row, 6, self._wrap_btn(perm_btn))
+
             # Reset password button
             reset_btn = QPushButton("🔑 تغییر رمز")
             reset_btn.setObjectName("action-btn")
             reset_btn.clicked.connect(lambda _, uid=user["id"], name=user["full_name"]: self._reset_pass(uid, name))
-            self._table.setCellWidget(row, 6, self._wrap_btn(reset_btn))
+            self._table.setCellWidget(row, 7, self._wrap_btn(reset_btn))
 
             # Activate/Deactivate button
             if is_active:
@@ -575,7 +704,7 @@ class UsersPage(QWidget):
                 toggle_btn = QPushButton("✅ فعال‌سازی")
                 toggle_btn.setObjectName("ok-btn")
                 toggle_btn.clicked.connect(lambda _, uid=user["id"]: self._toggle_active(uid, True))
-            self._table.setCellWidget(row, 7, self._wrap_btn(toggle_btn))
+            self._table.setCellWidget(row, 8, self._wrap_btn(toggle_btn))
 
     def _wrap_btn(self, btn: QPushButton) -> QWidget:
         w = QWidget()
@@ -591,6 +720,11 @@ class UsersPage(QWidget):
 
     def _edit_user(self, user: dict):
         dlg = EditUserDialog(user, self)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            self.load()
+
+    def _edit_permissions(self, user: dict):
+        dlg = PermissionsDialog(user, self)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             self.load()
 

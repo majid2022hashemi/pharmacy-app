@@ -33,6 +33,17 @@ def activate_user(user_id: int) -> dict:
     return r.json()
 
 
+def update_permissions(user_id: int, extra_permissions: list[str]) -> dict:
+    r = requests.patch(
+        f"{BASE_URL}/users/{user_id}/permissions",
+        json={"extra_permissions": extra_permissions},
+        headers=get_auth_headers(),
+        timeout=10,
+    )
+    r.raise_for_status()
+    return r.json()
+
+
 def admin_reset_password(user_id: int, new_password: str) -> None:
     r = requests.patch(
         f"{BASE_URL}/users/{user_id}/reset-password",

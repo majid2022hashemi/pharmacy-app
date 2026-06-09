@@ -50,8 +50,11 @@ class SaleResponse(BaseModel):
 
     total_amount: Decimal
 
+    created_at: str | None = None
+
     items: list[SaleItemResponse]
 
     model_config = {
-        "from_attributes": True
+        "from_attributes": True,
+        "json_encoders": {__import__("datetime").datetime: lambda v: v.isoformat()},
     }
