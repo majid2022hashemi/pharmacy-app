@@ -3,3 +3,5 @@ uvicorn
 sqlalchemy
 psycopg[binary]
 alembic
+python-jose[cryptography]
+bcrypt

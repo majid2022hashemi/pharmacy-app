@@ -10,6 +10,7 @@ from .stock_movement import StockMovement
 from .stock_reservation import StockReservation
 from .sale_return import SaleReturn
 from .purchase_return import PurchaseReturn
+from .user import User
 
 __all__ = [
     "Category",
@@ -24,4 +25,5 @@ __all__ = [
     "StockReservation",
     "SaleReturn",
     "PurchaseReturn",
+    "User",
 ]
