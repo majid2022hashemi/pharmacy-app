@@ -225,11 +225,6 @@ class MainWindow(QMainWindow):
             real_idx = page_map.get(lbl, 0)
             self._nav_btns[i] = (btn, real_idx, lbl)
 
-    def showEvent(self, event):
-        super().showEvent(event)
-        if not self.isMaximized():
-            self.showMaximized()
-
     # ── Nav ────────────────────────────────────────────
     def _nav_clicked(self, clicked_btn: QPushButton, label: str):
         for btn, page_idx, lbl in self._nav_btns:
