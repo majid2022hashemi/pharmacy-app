@@ -1,0 +1,2 @@
+class MedicineNotFoundError(Exception):
+    pass

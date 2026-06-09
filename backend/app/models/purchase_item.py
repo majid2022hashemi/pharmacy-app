@@ -1,0 +1,66 @@
+from decimal import Decimal
+
+from sqlalchemy import (
+    Integer,
+    Numeric,
+    ForeignKey,
+)
+
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
+
+from app.database import Base
+
+
+class PurchaseItem(Base):
+
+    __tablename__ = "purchase_items"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+    )
+
+    purchase_invoice_id: Mapped[int] = mapped_column(
+        ForeignKey("purchase_invoices.id"),
+        nullable=False,
+    )
+
+    medicine_id: Mapped[int] = mapped_column(
+        ForeignKey("medicines.id"),
+        nullable=False,
+    )
+
+    # اضافه شود
+    batch_id: Mapped[int] = mapped_column(
+        ForeignKey("medicine_batches.id"),
+        nullable=False,
+    )
+
+    quantity: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    unit_price: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2),
+        nullable=False,
+    )
+
+    purchase_invoice = relationship(
+        "PurchaseInvoice",
+        back_populates="items",
+    )
+
+    medicine = relationship(
+        "Medicine",
+        back_populates="purchase_items",
+    )
+
+    batch = relationship(
+        "MedicineBatch",
+        back_populates="purchase_items",
+    )
