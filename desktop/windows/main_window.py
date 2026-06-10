@@ -215,6 +215,10 @@ class MainWindow(QMainWindow):
                 from windows.dashboard_page import DashboardPage
                 self._dashboard_page = DashboardPage()
                 self._stack.addWidget(self._dashboard_page)
+            elif label == "داروها":
+                from windows.medicines_page import MedicinesPage
+                self._medicines_page = MedicinesPage()
+                self._stack.addWidget(self._medicines_page)
             elif label == "مدیریت کاربران":
                 self._users_page = UsersPage()
                 self._stack.addWidget(self._users_page)
