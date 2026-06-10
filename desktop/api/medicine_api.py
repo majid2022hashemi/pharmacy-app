@@ -35,18 +35,26 @@ def get_medicine_by_code(code: str) -> dict | None:
         return None
 
 
-def create_medicine(code, name, generic_name=None, dosage_form=None, strength=None,
-                    current_stock=0, sale_price=None, category_id=None, company_id=None):
+def create_medicine(code: str, name: str, virtual_code: str | None = None,
+                    trade_name: str | None = None, generic_name: str | None = None,
+                    dosage_form: str | None = None, strength: str | None = None,
+                    is_prescription: bool = False, current_stock: int = 0,
+                    sale_price=None, default_quantity: int = 1,
+                    category_id=None, company_id=None) -> dict:
     r = requests.post(
         f"{BASE_URL}/medicines",
         json={
             "code": code,
+            "virtual_code": virtual_code,
             "name": name,
+            "trade_name": trade_name,
             "generic_name": generic_name,
             "dosage_form": dosage_form,
             "strength": strength,
+            "is_prescription": is_prescription,
             "current_stock": current_stock,
             "sale_price": sale_price,
+            "default_quantity": default_quantity,
             "category_id": category_id,
             "company_id": company_id,
         },

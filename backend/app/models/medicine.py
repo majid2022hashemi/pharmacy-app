@@ -39,9 +39,19 @@ class Medicine(Base):
         nullable=False,
     )
 
+    virtual_code: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+    )
+
     name: Mapped[str] = mapped_column(
         String(200),
         nullable=False,
+    )
+
+    trade_name: Mapped[str | None] = mapped_column(
+        String(200),
+        nullable=True,
     )
 
     generic_name: Mapped[str | None] = mapped_column(
@@ -59,6 +69,11 @@ class Medicine(Base):
     is_prescription: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
+    )
+
+    default_quantity: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
     )
 
     current_stock: Mapped[int] = mapped_column(

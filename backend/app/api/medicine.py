@@ -1,35 +1,29 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
-from decimal import Decimal
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
 from app.models import Medicine
-from app.schemas.medicine import MedicineCreate, MedicineResponse
+from app.schemas.medicine import MedicineCreate, MedicineUpdate, MedicineResponse
 
 router = APIRouter()
 
 
-class MedicineUpdate(BaseModel):
-    name: str | None = None
-    generic_name: str | None = None
-    dosage_form: str | None = None
-    strength: str | None = None
-    sale_price: Decimal | None = None
-    is_prescription: bool | None = None
-    category_id: int | None = None
-
-
 @router.post("/medicines", response_model=MedicineResponse)
 def create_medicine(medicine: MedicineCreate, db: Session = Depends(get_db)):
+    if db.query(Medicine).filter(Medicine.code == medicine.code).first():
+        raise HTTPException(status_code=400, detail="کد دارو تکراری است")
     db_medicine = Medicine(
         code=medicine.code,
+        virtual_code=medicine.virtual_code,
         name=medicine.name,
+        trade_name=medicine.trade_name,
         generic_name=medicine.generic_name,
         dosage_form=medicine.dosage_form,
         strength=medicine.strength,
+        is_prescription=medicine.is_prescription,
         sale_price=medicine.sale_price,
         current_stock=medicine.current_stock,
+        default_quantity=medicine.default_quantity,
         category_id=medicine.category_id,
         company_id=medicine.company_id,
     )
@@ -56,7 +50,8 @@ def get_medicines(
         query = query.filter(
             Medicine.code.ilike(pattern) |
             Medicine.name.ilike(pattern) |
-            Medicine.generic_name.ilike(pattern)
+            Medicine.generic_name.ilike(pattern) |
+            Medicine.trade_name.ilike(pattern)
         )
     if otc is not None:
         query = query.filter(Medicine.is_prescription == (not otc))

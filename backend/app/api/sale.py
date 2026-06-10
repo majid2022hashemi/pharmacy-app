@@ -15,28 +15,29 @@ from app.schemas.sale import (
     SaleResponse,
 )
 
-from app.services.sale_service import (
-    SaleService,
-)
+from sqlalchemy.exc import IntegrityError
+from app.services.sale_service import SaleService
+from app.exceptions.sale_exceptions import InsufficientStockError, MedicineNotFoundError
 
 router = APIRouter()
 
 
-@router.post(
-    "/sales",
-    response_model=SaleResponse,
-)
-def create_sale(
-    sale: SaleCreate,
-    db: Session = Depends(get_db),
-):
-
-    return SaleService.create_sale(
-        db=db,
-        sale_number=sale.sale_number,
-        customer_name=sale.customer_name,
-        items=sale.items,
-    )
+@router.post("/sales", response_model=SaleResponse)
+def create_sale(sale: SaleCreate, db: Session = Depends(get_db)):
+    try:
+        return SaleService.create_sale(
+            db=db,
+            sale_number=sale.sale_number,
+            customer_name=sale.customer_name,
+            items=sale.items,
+        )
+    except InsufficientStockError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except MedicineNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="شماره سند تکراری است")
 
 
 @router.get(

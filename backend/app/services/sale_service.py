@@ -81,61 +81,74 @@ class SaleService:
                     )
                 )
 
-                total_available = sum(
+                total_batch_available = sum(
                     batch.quantity_remaining
                     for batch in batches
                 )
 
-                if total_available < item.quantity:
+                if batches and total_batch_available > 0:
+                    # FIFO batch deduction
+                    if total_batch_available < item.quantity:
+                        raise InsufficientStockError(
+                            f"موجودی کافی نیست: {medicine.name} "
+                            f"(موجود: {total_batch_available}، درخواست: {item.quantity})"
+                        )
 
-                    raise InsufficientStockError(
-                        f"Not enough stock for {medicine.name}"
-                    )
-
-                for batch in batches:
-
-                    if remaining_quantity <= 0:
-                        break
-
-                    sell_quantity = min(
-                        remaining_quantity,
-                        batch.quantity_remaining,
-                    )
-
-                    reservation = (
-                        ReservationRepository.create(
+                    for batch in batches:
+                        if remaining_quantity <= 0:
+                            break
+                        sell_quantity = min(
+                            remaining_quantity,
+                            batch.quantity_remaining,
+                        )
+                        reservation = ReservationRepository.create(
                             db=db,
                             medicine_id=item.medicine_id,
                             batch_id=batch.id,
                             quantity=sell_quantity,
                         )
-                    )
+                        batch.quantity_remaining -= sell_quantity
+                        SaleRepository.create_item(
+                            db=db,
+                            sale_id=sale.id,
+                            medicine_id=item.medicine_id,
+                            batch_id=batch.id,
+                            quantity=sell_quantity,
+                            unit_price=item.unit_price,
+                        )
+                        StockMovementRepository.create(
+                            db=db,
+                            medicine_id=item.medicine_id,
+                            batch_id=batch.id,
+                            movement_type=StockMovementType.SALE,
+                            quantity=sell_quantity,
+                            unit_price=item.unit_price,
+                            reference_id=sale.id,
+                            notes=f"Sale {sale.sale_number}",
+                        )
+                        reservation.status = "committed"
+                        remaining_quantity -= sell_quantity
 
-                    batch.quantity_remaining -= sell_quantity
-
+                else:
+                    # بدون batch — فروش مجاز است (موجودی منفی قابل قبول)
                     SaleRepository.create_item(
                         db=db,
                         sale_id=sale.id,
                         medicine_id=item.medicine_id,
-                        batch_id=batch.id,
-                        quantity=sell_quantity,
+                        batch_id=None,
+                        quantity=item.quantity,
                         unit_price=item.unit_price,
                     )
-
                     StockMovementRepository.create(
                         db=db,
                         medicine_id=item.medicine_id,
-                        batch_id=batch.id,
+                        batch_id=None,
                         movement_type=StockMovementType.SALE,
-                        quantity=sell_quantity,
+                        quantity=item.quantity,
                         unit_price=item.unit_price,
                         reference_id=sale.id,
                         notes=f"Sale {sale.sale_number}",
                     )
-
-                    reservation.status = "committed"
-
-                    remaining_quantity -= sell_quantity
 
                 medicine.current_stock -= item.quantity
 
