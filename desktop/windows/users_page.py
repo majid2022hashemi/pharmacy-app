@@ -10,6 +10,7 @@ from PyQt6.QtGui import QColor
 import requests
 from api.users_api import get_users, create_user, update_user, update_permissions, deactivate_user, activate_user, admin_reset_password
 from windows.login_window import _make_password_row
+from session import Session
 
 ROLE_FA = {
     "ADMIN":                "مدیریت",
@@ -514,16 +515,16 @@ class PermissionsDialog(QDialog):
 
 # ── Admin Reset Password Dialog ────────────────────────────
 class AdminResetDialog(QDialog):
-    def __init__(self, user_id: int, full_name: str, parent=None):
+    def __init__(self, user_id: int, full_name: str, username: str, parent=None):
         super().__init__(parent)
         self.user_id = user_id
-        self.setWindowTitle(f"تغییر رمز — {full_name}")
+        self.setWindowTitle(f"تغییر رمز — {username}")
         self.setFixedWidth(340)
         self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.setStyleSheet(DIALOG_STYLE)
-        self._build_ui()
+        self._build_ui(full_name, username)
 
-    def _build_ui(self):
+    def _build_ui(self, full_name: str, username: str):
         v = QVBoxLayout(self)
         v.setContentsMargins(24, 20, 24, 20)
         v.setSpacing(12)
@@ -531,6 +532,15 @@ class AdminResetDialog(QDialog):
         title = QLabel("تغییر رمز عبور توسط مدیر")
         title.setStyleSheet("font-size: 14px; font-weight: bold; color: #1e293b;")
         v.addWidget(title)
+
+        info = QLabel(f"کاربر:  {full_name}  (@{username})")
+        info.setStyleSheet(
+            "font-size: 12px; color: #2563eb; background: #eff6ff; "
+            "border: 1px solid #bfdbfe; border-radius: 6px; padding: 6px 10px;"
+        )
+        info.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        info.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        v.addWidget(info)
 
         form = QFormLayout()
         form.setSpacing(10)
@@ -601,11 +611,11 @@ class UsersPage(QWidget):
         header.addWidget(title)
         header.addStretch()
 
-        refresh_btn = QPushButton("🔄  بارگذاری مجدد")
-        refresh_btn.setObjectName("action-btn")
-        refresh_btn.setFixedHeight(36)
-        refresh_btn.clicked.connect(self.load)
-        header.addWidget(refresh_btn)
+        self._refresh_btn = QPushButton("🔄  بارگذاری مجدد")
+        self._refresh_btn.setObjectName("action-btn")
+        self._refresh_btn.setFixedHeight(36)
+        self._refresh_btn.clicked.connect(lambda: self.load())
+        header.addWidget(self._refresh_btn)
 
         add_btn = QPushButton("➕  کاربر جدید")
         add_btn.setObjectName("add-btn")
@@ -651,6 +661,8 @@ class UsersPage(QWidget):
         v.addWidget(self._status_lbl)
 
     def load(self):
+        self._refresh_btn.setEnabled(False)
+        self._refresh_btn.setText("⏳  در حال بارگذاری...")
         self._status_lbl.setText("در حال بارگذاری...")
         try:
             self._users = get_users()
@@ -658,6 +670,10 @@ class UsersPage(QWidget):
             self._status_lbl.setText(f"{len(self._users)} کاربر")
         except Exception as e:
             self._status_lbl.setText(f"خطا: {e}")
+            QMessageBox.critical(self, "خطا در بارگذاری", f"لیست کاربران بارگذاری نشد:\n{e}")
+        finally:
+            self._refresh_btn.setEnabled(True)
+            self._refresh_btn.setText("🔄  بارگذاری مجدد")
 
     def _populate(self):
         self._table.setRowCount(0)
@@ -692,7 +708,10 @@ class UsersPage(QWidget):
             # Reset password button
             reset_btn = QPushButton("🔑 تغییر رمز")
             reset_btn.setObjectName("action-btn")
-            reset_btn.clicked.connect(lambda _, uid=user["id"], name=user["full_name"]: self._reset_pass(uid, name))
+            reset_btn.clicked.connect(
+                lambda _, uid=user["id"], name=user["full_name"], uname=user["username"]:
+                    self._reset_pass(uid, name, uname)
+            )
             self._table.setCellWidget(row, 7, self._wrap_btn(reset_btn))
 
             # Activate/Deactivate button
@@ -728,10 +747,18 @@ class UsersPage(QWidget):
         if dlg.exec() == QDialog.DialogCode.Accepted:
             self.load()
 
-    def _reset_pass(self, user_id: int, full_name: str):
-        dlg = AdminResetDialog(user_id, full_name, self)
+    def _reset_pass(self, user_id: int, full_name: str, username: str):
+        me = Session.user() or {}
+        if me.get("id") == user_id:
+            QMessageBox.warning(
+                self, "هشدار",
+                "برای تغییر رمز خودتان از بخش پروفایل استفاده کنید.\n"
+                "این بخش فقط برای تغییر رمز سایر کاربران است."
+            )
+            return
+        dlg = AdminResetDialog(user_id, full_name, username, self)
         if dlg.exec() == QDialog.DialogCode.Accepted:
-            QMessageBox.information(self, "موفق", "رمز عبور با موفقیت تغییر کرد.")
+            QMessageBox.information(self, "موفق", f"رمز عبور @{username} با موفقیت تغییر کرد.")
 
     def _toggle_active(self, user_id: int, activate: bool):
         action = "فعال‌سازی" if activate else "غیرفعال‌سازی"
